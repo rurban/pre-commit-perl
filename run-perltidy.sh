@@ -15,9 +15,11 @@ if ! command -v "${cmd}" >/dev/null 2>&1; then
 fi
 
 cfg=.perltidyrc
-opts=(--nostandard-output --warning-output --backup-and-modify-in-place)
+# --nostandard-output --warning-output --backup-and-modify-in-place --backup-method=move
+opts=(-nst -w -b -bm=move)
 if [[ ! -r "${cfg}" ]] && [[ ! -r "$HOME/${cfg}" ]]; then
-    opts=("--noprofile" "--perl-best-practices" "${opts[@]}")
+    # --noprofile" "--perl-best-practices
+    opts=("-npro" "-pbp" "${opts[@]}")
 fi
 
 if ! output=$("${cmd}" "${opts[@]}" "$@" 2>&1) ||
@@ -25,3 +27,14 @@ if ! output=$("${cmd}" "${opts[@]}" "$@" 2>&1) ||
     echo "${output}"
     exit 1
 fi
+
+for file in "$@"
+do
+    if cmp "$file" "${file}.bak" >/dev/null 2>&1; then
+        # nothing changed
+        mv "${file}.bak" "${file}"
+    else
+        # we have it in git
+        rm -f "${file}.bak"
+    fi
+done
